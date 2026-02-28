@@ -671,6 +671,84 @@
        document.getElementById('header-ytd-gross').innerText = f(totalEstGrossVal);
         autoScroll(); 
     }
+function forceSchedule() {
+        if(!currentPeriodId) return;
+        if(confirm("Force reload schedule? This will reset all hours for this 14-day period to the current crew pattern.")) {
+            applySchedule(periods[currentPeriodId-1].startDateObj);
+            calc();
+        }
+    }
+
+function applySchedule(pStart) {
+        let mode = document.getElementById('sched-mode').value;
+        let sLen = document.getElementById('custom-length')?.value || "12";
+        let start = new Date(pStart);
+        
+        // 56-Day Cycle Offsets (Spaced by 14 days to cover the 8-week pattern)
+        let crew = document.getElementById('crew-select')?.value || 'D';
+        let offset = 0;
+        if(crew === 'C') offset = 14;
+        if(crew === 'B') offset = 28;
+        if(crew === 'A') offset = 42;
+
+        let customLen = parseInt(document.getElementById('custom-cycle-len')?.value) || 14;
+        let cAnchorStr = document.getElementById('custom-anchor')?.value;
+        let cAnchor = cAnchorStr ? new Date(cAnchorStr) : new Date();
+
+        for(let w=1; w<=2; w++) {
+            for(let d=0; d<7; d++) {
+                let cur = new Date(start);
+                cur.setDate(start.getDate() + ((w-1)*7) + d);
+                
+                let isWork = false;
+                let hrsToApply = sLen;
+
+                if (mode === 'mill') {
+                    // Uses YOUR cyclePatterns array (56-day rotation)
+                    let diff = Math.floor((cur - scheduleAnchor) / (1000 * 60 * 60 * 24));
+                    let cycleDay = (diff - offset) % 56;
+                    if(cycleDay < 0) cycleDay += 56;
+                    
+                    let cycleWeek = Math.floor(cycleDay / 7);
+                    let dow = cycleDay % 7;
+                    
+                    // This pulls directly from your specific [0,3,4], [1,2,3,4], etc. array
+                    if (cyclePatterns[cycleWeek].includes(dow)) {
+                        isWork = true;
+                        hrsToApply = 12; 
+                    }
+                } else {
+                    // Smart Pattern Painter Logic
+                    let diff = Math.floor((cur - cAnchor) / (1000 * 60 * 60 * 24));
+                    let cDay = diff % customLen;
+                    if(cDay < 0) cDay += customLen;
+                    
+                    let paintVal = customPattern[cDay] || 0;
+                    if (paintVal > 0) {
+                        isWork = true;
+                        hrsToApply = paintVal;
+                    }
+                }
+
+                let btn = document.getElementById(`btn-${w}-${d}`);
+                let tIn = document.getElementById(`time-${w}-${d}`);
+                let card = document.getElementById(`card-${w}-${d}`);
+                
+                if(btn && tIn) {
+                    tIn.value = ""; // Clear manual input
+                    if(isWork) {
+                        btn.classList.add('active');
+                        btn.innerText = hrsToApply + " HR";
+                        if(card && !card.classList.contains('status-vac')) card.classList.add('status-worked');
+                    } else {
+                        btn.classList.remove('active');
+                        btn.innerText = sLen + " HR";
+                        if(card) card.classList.remove('status-worked');
+                    }
+                }
+            }
+        }
+    }
 
     function openSettings() { 
         let h = document.getElementById('main-dash-header') || document.getElementById('dash-header');
