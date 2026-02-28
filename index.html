@@ -689,6 +689,21 @@
     
     // RESTORED SAVE AND CLOSE FUNCTION
     function saveAndClose() { 
+        function openSettings() { 
+        let h = document.getElementById('main-dash-header') || document.getElementById('dash-header');
+        if(h) h.style.display = 'none';
+        document.getElementById('dashboard-view').style.display = 'none'; 
+        document.getElementById('settings-view').style.display = 'block'; 
+        window.scrollTo(0,0); 
+    }
+
+    function closeSettings() { 
+        saveSettings(); 
+        document.getElementById('settings-view').style.display = 'none'; 
+        let h = document.getElementById('main-dash-header') || document.getElementById('dash-header');
+        if(h) h.style.display = 'flex';
+        document.getElementById('dashboard-view').style.display = 'block'; 
+    }
         let pData = { inputs: {}, gross: 0, net: 0, actuals: {}, breakdown: {}, breakdownHrs: {}, deductions: {} }; 
         document.querySelectorAll('#calculator-view input:not(.d-input), #calculator-view select').forEach(el => { if(el.type === 'checkbox') pData.inputs[el.id] = el.checked; else pData.inputs[el.id] = el.value; }); 
         document.querySelectorAll('.btn-12').forEach(b => { if(b.classList.contains('active')) pData.inputs[b.id] = true; }); 
@@ -1675,3 +1690,4 @@
 </script>
 </body>
 </html>
+
