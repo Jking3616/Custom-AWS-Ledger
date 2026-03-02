@@ -695,105 +695,36 @@ function isUnionHoliday(dateStr){
             let val = isDone ? f(data.net) : "--";
             let statusClass = "";
             if (isVerified) statusClass = "verified"; else if (isDone) statusClass = "estimated"; else if (today >= p.start && today <= p.end) statusClass = "current";
+            
+            // SCAN THE 14 DAYS FOR VACATIONS AND HOLIDAYS
             let isVac = false;
+            let hasHol = false;
             let pS = new Date(p.start);
-            while(pS <= new Date(p.end)) { if(vacationDates.includes(fmt(pS))) isVac = true; pS.setDate(pS.getDate()+1); }
+            let pE = new Date(p.end);
+            while(pS <= pE) { 
+                let dStr = fmt(pS);
+                if(vacationDates.includes(dStr)) isVac = true; 
+                if(isUnionHoliday(dStr)) hasHol = true; // Checks if any day is a holiday
+                pS.setDate(pS.getDate()+1); 
+            }
             if(isVac) statusClass += " vacation-active";
+            
+            // APPLY PURPLE INLINE STYLE IF HOLIDAY IS FOUND
+            let rangeStyle = hasHol ? "color: #ba68c8; font-weight: bold;" : "";
+            
             let depBadge = "";
             if(isDone && distTotal > 0) {
                 let mainDep = Math.max(0, data.net - distTotal);
                 depBadge = `<div class="deposit-badge">Main Deposit: ${f(mainDep)}</div>`;
             }
-            container.innerHTML += `<div class="pay-card ${statusClass} ${p.isEarly?'early-pay':''}" onclick="openPeriod(${p.id})" data-ref-section="Dashboard" data-ref-selector=".pay-card"><div class="date-badge" onclick="resetSingleCheck(${p.id}, event)">#${p.id}</div><div class="card-info"><span class="pay-date-label">${p.payDate} Paycheck</span><span class="period-range">${p.fullRange}</span>${depBadge}</div><div class="card-total">${val}</div></div>`;
+            
+            // INJECTS rangeStyle INTO THE .period-range SPAN
+            container.innerHTML += `<div class="pay-card ${statusClass} ${p.isEarly?'early-pay':''}" onclick="openPeriod(${p.id})" data-ref-section="Dashboard" data-ref-selector=".pay-card"><div class="date-badge" onclick="resetSingleCheck(${p.id}, event)">#${p.id}</div><div class="card-info"><span class="pay-date-label">${p.payDate} Paycheck</span><span class="period-range" style="${rangeStyle}">${p.fullRange}</span>${depBadge}</div><div class="card-total">${val}</div></div>`;
         });
-        document.getElementById('header-ytd-label').innerText = "EST. GROSS YTD";
-       document.getElementById('header-ytd-gross').innerText = f(totalEstGrossVal);
-        autoScroll(); 
-    }
-function forceSchedule() {
-        if(!currentPeriodId) return;
-        if(confirm("Force reload schedule? This will reset all hours for this 14-day period to the current crew pattern.")) {
-            applySchedule(periods[currentPeriodId-1].startDateObj);
-            calc();
-        }
-    }
-
-function applySchedule(pStart) {
-        let mode = document.getElementById('sched-mode').value;
-        let sLen = document.getElementById('custom-length')?.value || "12";
-        let start = new Date(pStart);
         
-        let crew = document.getElementById('crew-select')?.value || 'D';
-        let offset = 0;
-        if(crew === 'C') offset = 14;
-        if(crew === 'B') offset = 28;
-        if(crew === 'A') offset = 42;
-
-        let customLen = parseInt(document.getElementById('custom-cycle-len')?.value) || 14;
-        let cAnchorStr = document.getElementById('custom-anchor')?.value;
-        let cAnchor = cAnchorStr ? new Date(cAnchorStr) : new Date();
-
-        for(let w=1; w<=2; w++) {
-            for(let d=0; d<7; d++) {
-                let cur = new Date(start);
-                cur.setDate(start.getDate() + ((w-1)*7) + d);
-                
-                let curDateStr = fmt(cur);
-                let isVac = vacationDates.includes(curDateStr);
-                let sysHolName = isUnionHoliday(curDateStr);
-                
-                let isScheduled = false;
-                let hrsToApply = sLen;
-
-                if (mode === 'mill') {
-                    // Math.round fixes the Spring Forward DST gap
-                    let diff = Math.round((cur - scheduleAnchor) / (1000 * 60 * 60 * 24));
-                    let cycleDay = (diff - offset) % 56;
-                    if(cycleDay < 0) cycleDay += 56;
-                    let cycleWeek = Math.floor(cycleDay / 7);
-                    let dow = cycleDay % 7;
-                    if (cyclePatterns[cycleWeek].includes(dow)) { isScheduled = true; hrsToApply = 12; }
-                } else {
-                    let diff = Math.round((cur - cAnchor) / (1000 * 60 * 60 * 24));
-                    let cDay = diff % customLen;
-                    if(cDay < 0) cDay += customLen;
-                    let paintVal = customPattern[cDay] || 0;
-                    if (paintVal > 0) { isScheduled = true; hrsToApply = paintVal; }
-                }
-
-                let btn = document.getElementById(`btn-${w}-${d}`);
-                let tIn = document.getElementById(`time-${w}-${d}`);
-                let card = document.getElementById(`card-${w}-${d}`);
-                let holCheck = document.getElementById(`hol-${w}-${d}`);
-                let vdCheck = document.getElementById(`vd-${w}-${d}`);
-                
-                if(btn && tIn) {
-                    tIn.value = ""; 
-                    if(holCheck) holCheck.checked = false;
-                    if(vdCheck) vdCheck.checked = false;
-
-                    if (isVac) {
-                        // Vacation overrides everything
-                        if(vdCheck) vdCheck.checked = true;
-                        btn.classList.remove('active');
-                        btn.innerText = sLen + " HR";
-                        if(card) card.classList.remove('status-worked');
-                    } else if (isScheduled) {
-                        // Working as Scheduled
-                        btn.classList.add('active');
-                        btn.innerText = hrsToApply + " HR";
-                        if(card && !card.classList.contains('status-vac')) card.classList.add('status-worked');
-                        // Smart Auto-Check for Working Holidays
-                        if (sysHolName && holCheck) holCheck.checked = true;
-                    } else {
-                        // Normal Day Off
-                        btn.classList.remove('active');
-                        btn.innerText = sLen + " HR";
-                        if(card) card.classList.remove('status-worked');
-                    }
-                }
-            }
-        }
+        document.getElementById('header-ytd-label').innerText = "EST. GROSS YTD";
+        document.getElementById('header-ytd-gross').innerText = f(totalEstGrossVal);
+        autoScroll(); 
     }
 
     function openSettings() { 
