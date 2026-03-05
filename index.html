@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Custom AWS Ledger 1.3.3 (Platinum Logic)</title>
+    <title>Custom AWS Ledger 1.3.4 (Platinum Logic)</title>
     <style>
         :root { --bg: #000000; --app-bg: #000000; --card: #1e1e1e; --text: #e0e0e0; --border: #333; --row: #2a2a2a; --accent: #4dadff; --dim: #888; --success: #00c853; --danger: #ff5252; --warning: #ffb300; --gold: #ffd700; --est-yellow: #ffeb3b; --hol-work: #7b1fa2; --hol-off: #4a148c; --vacation: #ff6f00; --electric: #2979ff; --teal: #00bcd4; }
         * { box-sizing: border-box; }
@@ -85,7 +85,7 @@
         .move-up-btn { flex: 1; background: transparent; border: 1px solid var(--border); color: var(--dim); border-radius: 4px; font-size: 8px; padding: 3px; font-weight: bold; text-transform: uppercase; transition: 0.2s; cursor: pointer; }
         .move-up-btn.glow-blue { border-color: var(--electric); color: var(--electric); background: rgba(41, 121, 255, 0.1); box-shadow: 0 0 5px rgba(41, 121, 255, 0.3); }
         .move-up-btn.glow-gold { border-color: var(--gold); color: var(--gold); background: rgba(255, 215, 0, 0.1); box-shadow: 0 0 8px rgba(255, 215, 0, 0.4); }
-        .glow-green { border-color: var(--success) !important; color: var(--success) !important; background: rgba(0, 200, 83, 0.1) !important; box-shadow: 0 0 8px rgba(0, 200, 83, 0.4) !important; }
+        
         .extra-rate-select { display: none; background: #004d40; color: white; border: 1px solid #00695c; padding: 6px; border-radius: 4px; font-size: 12px; font-weight: bold; margin-top: 4px; width: 100%; }
         .extra-rate-select.show { display: block; }
         
@@ -231,7 +231,7 @@
                         <option value="2030">2030 LEDGER</option>
                         <option value="2031">2031 LEDGER</option>
                     </select>
-                    <div style="font-size:10px; color:#888;">Custom AWS Ledger 1.3.3</div>
+                    <div style="font-size:10px; color:#888;">Custom AWS Ledger 1.3.4</div>
                 </div>
                 <div style="display:flex; align-items:center;">
                     <div class="dash-stats"><div id="header-ytd-label">EST. GROSS YTD</div><div class="ytd-val" id="header-ytd-gross">$0.00</div></div>
@@ -537,47 +537,8 @@
     }
 
     function getEaster(year) { let f=Math.floor,G=year%19,C=f(year/100),H=(C-f(C/4)-f((8*C+13)/25)+19*G+15)%30,I=H-f(H/28)*(1-f(29/(H+1))*f((21-G)/11)),J=(year+f(year/4)+I+2-C+f(C/4))%7,L=I-J,m=3+f((L+40)/44),d=L+28-31*f(m/4); return new Date(year,m-1,d); }
-function isUnionHoliday(dateStr){
-        let parts=dateStr.split('-'), y=parseInt(parts[0]), m=parseInt(parts[1])-1, dy=parseInt(parts[2]);
-        let d=new Date(y,m,dy);
-        let dw=d.getDay(), n=Math.ceil(dy/7);
-        let e=getEaster(y), gf=new Date(e); gf.setDate(e.getDate()-2);
-        
-        // Smart Fixed Holiday Check (Pushes Sundays to Monday)
-        function isObserved(cM, cD) {
-            let hd = new Date(y, cM, cD);
-            if (hd.getDay() === 0) { 
-                let obs = new Date(y, cM, cD + 1);
-                return (m === obs.getMonth() && dy === obs.getDate());
-            }
-            return (m === cM && dy === cD);
-        }
-        
-        if(isObserved(0, 1)) return "New Years";
-        if(isObserved(5, 19)) return "Juneteenth";
-        if(isObserved(6, 4)) return "Independence";
-        
-        // Christmas Eve / Day specific Sunday push logic
-        let xEve = new Date(y, 11, 24), xDay = new Date(y, 11, 25);
-        if (xEve.getDay() === 0) { // Eve is Sun -> Eve Mon, Day Tue
-            if(m===11 && dy===25) return "Xmas Eve";
-            if(m===11 && dy===26) return "Xmas Day";
-        } else if (xDay.getDay() === 0) { // Day is Sun -> Eve Sat, Day Mon
-            if(m===11 && dy===24) return "Xmas Eve";
-            if(m===11 && dy===26) return "Xmas Day";
-        } else {
-            if(m===11 && dy===24) return "Xmas Eve";
-            if(m===11 && dy===25) return "Xmas Day";
-        }
-        
-        if(m==gf.getMonth()&&dy==gf.getDate()) return "Good Friday";
-        if(m==0&&dw==1&&n==3) return "MLK Day";
-        if(m==4&&dw==1&&dy+7>31) return "Memorial Day";
-        if(m==8&&dw==1&&n==1) return "Labor Day";
-        if(m==10&&dw==4&&n==4) return "Thanksgiving";
-        if(m==10&&dw==5&&dy>23&&dy<31){let p=new Date(y,m,dy-1);if(p.getDay()==4&&Math.ceil(p.getDate()/7)==4)return "Day After TG"}
-        return null;
-    }    function isBankHoliday(d){let m=d.getMonth(),dy=d.getDate();if(m==0&&dy==1||m==5&&dy==19||m==6&&dy==4||m==10&&dy==11||m==11&&dy==25)return true;let dw=d.getDay(),n=Math.ceil(dy/7);if(m==0&&dw==1&&n==3||m==1&&dw==1&&n==3||(m==4&&dw==1&&dy+7>31)||m==8&&dw==1&&n==1||m==9&&dw==1&&n==2||m==10&&dw==4&&n==4)return true;return false;}
+    function isUnionHoliday(dateStr){let parts=dateStr.split('-'),y=parseInt(parts[0]),m=parseInt(parts[1])-1,dy=parseInt(parts[2]),d=new Date(y,m,dy),e=getEaster(y),gf=new Date(e);gf.setDate(e.getDate()-2);if(m==0&&dy==1)return"New Years";if(m==5&&dy==19)return"Juneteenth";if(m==6&&dy==4)return"Independence";if(m==11&&dy==24)return"Xmas Eve";if(m==11&&dy==25)return"Xmas Day";if(m==gf.getMonth()&&dy==gf.getDate())return"Good Friday";let dw=d.getDay(),n=Math.ceil(dy/7);if(m==0&&dw==1&&n==3)return"MLK Day";if(m==4&&dw==1&&dy+7>31)return"Memorial Day";if(m==8&&dw==1&&n==1)return"Labor Day";if(m==10&&dw==4&&n==4)return"Thanksgiving";if(m==10&&dw==5&&dy>23&&dy<31){let p=new Date(y,m,dy-1);if(p.getDay()==4&&Math.ceil(p.getDate()/7)==4)return"Day After TG"}return null;}
+    function isBankHoliday(d){let m=d.getMonth(),dy=d.getDate();if(m==0&&dy==1||m==5&&dy==19||m==6&&dy==4||m==10&&dy==11||m==11&&dy==25)return true;let dw=d.getDay(),n=Math.ceil(dy/7);if(m==0&&dw==1&&n==3||m==1&&dw==1&&n==3||(m==4&&dw==1&&dy+7>31)||m==8&&dw==1&&n==1||m==9&&dw==1&&n==2||m==10&&dw==4&&n==4)return true;return false;}
     function isBonusWeek(d) { let y = d.getFullYear(), m = d.getMonth(), dy = d.getDate(); if (m === 0 && dy >= 4) return true; if (m === 1) return true; if (m === 2 && dy <= 14) return true; return false; }
 
     const scheduleAnchor = new Date('2025-12-21T00:00:00');
@@ -695,36 +656,107 @@ function isUnionHoliday(dateStr){
             let val = isDone ? f(data.net) : "--";
             let statusClass = "";
             if (isVerified) statusClass = "verified"; else if (isDone) statusClass = "estimated"; else if (today >= p.start && today <= p.end) statusClass = "current";
-            
-            // SCAN THE 14 DAYS FOR VACATIONS AND HOLIDAYS
             let isVac = false;
-            let hasHol = false;
             let pS = new Date(p.start);
-            let pE = new Date(p.end);
-            while(pS <= pE) { 
-                let dStr = fmt(pS);
-                if(vacationDates.includes(dStr)) isVac = true; 
-                if(isUnionHoliday(dStr)) hasHol = true; // Checks if any day is a holiday
-                pS.setDate(pS.getDate()+1); 
-            }
+            while(pS <= new Date(p.end)) { if(vacationDates.includes(fmt(pS))) isVac = true; pS.setDate(pS.getDate()+1); }
             if(isVac) statusClass += " vacation-active";
-            
-            // APPLY PURPLE INLINE STYLE IF HOLIDAY IS FOUND
-            let rangeStyle = hasHol ? "color: #ba68c8; font-weight: bold;" : "";
-            
             let depBadge = "";
             if(isDone && distTotal > 0) {
                 let mainDep = Math.max(0, data.net - distTotal);
                 depBadge = `<div class="deposit-badge">Main Deposit: ${f(mainDep)}</div>`;
             }
-            
-            // INJECTS rangeStyle INTO THE .period-range SPAN
-            container.innerHTML += `<div class="pay-card ${statusClass} ${p.isEarly?'early-pay':''}" onclick="openPeriod(${p.id})" data-ref-section="Dashboard" data-ref-selector=".pay-card"><div class="date-badge" onclick="resetSingleCheck(${p.id}, event)">#${p.id}</div><div class="card-info"><span class="pay-date-label">${p.payDate} Paycheck</span><span class="period-range" style="${rangeStyle}">${p.fullRange}</span>${depBadge}</div><div class="card-total">${val}</div></div>`;
+            container.innerHTML += `<div class="pay-card ${statusClass} ${p.isEarly?'early-pay':''}" onclick="openPeriod(${p.id})" data-ref-section="Dashboard" data-ref-selector=".pay-card"><div class="date-badge" onclick="resetSingleCheck(${p.id}, event)">#${p.id}</div><div class="card-info"><span class="pay-date-label">${p.payDate} Paycheck</span><span class="period-range">${p.fullRange}</span>${depBadge}</div><div class="card-total">${val}</div></div>`;
         });
-        
         document.getElementById('header-ytd-label').innerText = "EST. GROSS YTD";
-        document.getElementById('header-ytd-gross').innerText = f(totalEstGrossVal);
+       document.getElementById('header-ytd-gross').innerText = f(totalEstGrossVal);
         autoScroll(); 
+    }
+function forceSchedule() {
+        if(!currentPeriodId) return;
+        if(confirm("Force reload schedule? This will reset all hours for this 14-day period to the current crew pattern.")) {
+            applySchedule(periods[currentPeriodId-1].startDateObj);
+            calc();
+        }
+    }
+
+function applySchedule(pStart) {
+        let mode = document.getElementById('sched-mode').value;
+        let sLen = document.getElementById('custom-length')?.value || "12";
+        let start = new Date(pStart);
+        
+        let crew = document.getElementById('crew-select')?.value || 'D';
+        let offset = 0;
+        if(crew === 'C') offset = 14;
+        if(crew === 'B') offset = 28;
+        if(crew === 'A') offset = 42;
+
+        let customLen = parseInt(document.getElementById('custom-cycle-len')?.value) || 14;
+        let cAnchorStr = document.getElementById('custom-anchor')?.value;
+        let cAnchor = cAnchorStr ? new Date(cAnchorStr) : new Date();
+
+        for(let w=1; w<=2; w++) {
+            for(let d=0; d<7; d++) {
+                let cur = new Date(start);
+                cur.setDate(start.getDate() + ((w-1)*7) + d);
+                
+                let curDateStr = fmt(cur);
+                let isVac = vacationDates.includes(curDateStr);
+                let sysHolName = isUnionHoliday(curDateStr);
+                
+                let isScheduled = false;
+                let hrsToApply = sLen;
+
+                if (mode === 'mill') {
+                    let diff = Math.round((cur - scheduleAnchor) / (1000 * 60 * 60 * 24));
+                    let cycleDay = (diff - offset) % 56;
+                    if(cycleDay < 0) cycleDay += 56;
+                    let cycleWeek = Math.floor(cycleDay / 7);
+                    let dow = cycleDay % 7;
+                    if (cyclePatterns[cycleWeek].includes(dow)) { isScheduled = true; hrsToApply = 12; }
+                } else {
+                    // Math.round applied to Smart Pattern Painter to defeat DST 23-hour trap
+                    let diff = Math.round((cur - cAnchor) / (1000 * 60 * 60 * 24));
+                    let cDay = diff % customLen;
+                    let paintVal = customPattern[cDay] || 0;
+                    if (paintVal > 0) { isScheduled = true; hrsToApply = paintVal; }
+                }
+
+                let btn = document.getElementById(`btn-${w}-${d}`);
+                let tIn = document.getElementById(`time-${w}-${d}`);
+                let card = document.getElementById(`card-${w}-${d}`);
+                let holCheck = document.getElementById(`hol-${w}-${d}`);
+                let vdCheck = document.getElementById(`vd-${w}-${d}`);
+                
+                if(btn && tIn) {
+                    tIn.value = ""; // Clear manual input
+                    
+                    // Reset boxes before applying new logic
+                    if(holCheck) holCheck.checked = false;
+                    if(vdCheck) vdCheck.checked = false;
+
+                    if (isVac) {
+                        // Priority 1: Vacation overrides schedule
+                        if(vdCheck) vdCheck.checked = true;
+                        btn.classList.remove('active');
+                        btn.innerText = sLen + " HR";
+                        if(card) card.classList.remove('status-worked');
+                    } else if (isScheduled) {
+                        // Priority 2: Working as Scheduled
+                        btn.classList.add('active');
+                        btn.innerText = hrsToApply + " HR";
+                        if(card && !card.classList.contains('status-vac')) card.classList.add('status-worked');
+                        
+                        // Smart Auto-Check for Working Holidays
+                        if (sysHolName && holCheck) holCheck.checked = true;
+                    } else {
+                        // Priority 3: Normal Day Off
+                        btn.classList.remove('active');
+                        btn.innerText = sLen + " HR";
+                        if(card) card.classList.remove('status-worked');
+                    }
+                }
+            }
+        }
     }
 
     function openSettings() { 
@@ -1007,7 +1039,9 @@ function isUnionHoliday(dateStr){
             let mtVal = parseFloat(document.getElementById('mt-val').value) || 16.17;
             
             let tripwireLimit = 12;
-            if (mode === 'custom') { tripwireLimit = parseInt(document.getElementById('custom-length')?.value) || 12; }
+            if (mode === 'custom') {
+                tripwireLimit = parseInt(document.getElementById('custom-length')?.value) || 12;
+            }
 
             let dayMap = [];
             let bidLvl = document.getElementById('biddedRate').value;
@@ -1051,6 +1085,7 @@ function isUnionHoliday(dateStr){
                     let isVD = vacCheck ? vacCheck.checked : false;
                     let isVac = (isVW || isVD || vacationDates.includes(card.getAttribute('data-date').split('T')[0]));
                     let dateStr = card.getAttribute('data-date');
+                    let extra = false; 
 
                     let toggleBtnMU = document.getElementById(`toggle-mu-${w}-${d}`);
                     let toggleBtnES = document.getElementById(`toggle-es-${w}-${d}`);
@@ -1076,8 +1111,9 @@ function isUnionHoliday(dateStr){
                     if (!isVac && !ro) {
                         if (timeHrs > 0) { hasWork = true; }
                         else if (btn.classList.contains('active')) { 
+                            let btnTxt = btn.innerText.split(' ')[0];
                             hasWork = true; 
-                            timeHrs = parseFloat(btn.innerText.split(' ')[0]) || 12; 
+                            timeHrs = parseFloat(btnTxt) || 12; 
                         }
                     }
                     
@@ -1097,17 +1133,18 @@ function isUnionHoliday(dateStr){
                         else { card.classList.add('status-worked'); }
                     } else if (isVac) {
                         btn.classList.remove('active');
-                        inputVal.value = "";
+                        document.getElementById('time-'+w+'-'+d).value = ""; 
                     }
                     
-                    dayMap.push({ w: w, d: d, date: new Date(dateStr), ro: ro, hasWork: hasWork, xtra: xtra, isScheduled: (hasWork || ro) && !xtra, timeHrs: timeHrs, dq: (dqCheck && dqCheck.checked), mt: hasMT });
+                    // Added isVac to dayMap for the holiday scanner
+                    dayMap.push({ w: w, d: d, date: new Date(dateStr), ro: ro, hasWork: hasWork, extra: extra, xtra: xtra, isScheduled: (hasWork || ro) && !xtra, timeHrs: timeHrs, dq: (dqCheck && dqCheck.checked), mt: hasMT, isVac: isVac });
                 }
             }
             if (dayMap.length === 0) return;
 
             let GT = { rH:0, rC:0, vH:0, vC:0, oH:0, oC:0, cH:0, cC:0, sH:0, sC:0, hH:0, hC:0, uhH:0, uhC:0, incC:0, vbC:0, mtH:0, mtC:0 };
             
-            // THE "MAKE-WHOLE" HOLIDAY LOOP
+            // THE "MAKE-WHOLE" HOLIDAY LOOP (Now respects VW weeks)
             for (let i = 0; i < 14; i++) {
                 let dayObj = dayMap[i];
                 let card = document.getElementById(`card-${dayObj.w}-${dayObj.d}`);
@@ -1121,12 +1158,13 @@ function isUnionHoliday(dateStr){
                 if (isHoliday) { 
                     let disqualified = false;
                     if (dayObj.dq) disqualified = true;
-                    if (!disqualified) {
+                    // Only check for RO disqualification if it's NOT a vacation day
+                    if (!disqualified && !dayObj.isVac) {
                         for (let b = i - 1; b >= 0; b--) {
                             if (dayMap[b].isScheduled) { if (dayMap[b].ro) disqualified = true; break; }
                         }
                     }
-                    if (!disqualified) {
+                    if (!disqualified && !dayObj.isVac) {
                         for (let f = i + 1; f < 14; f++) {
                             if (dayMap[f].isScheduled) { if (dayMap[f].ro) disqualified = true; break; }
                         }
@@ -1137,7 +1175,8 @@ function isUnionHoliday(dateStr){
                         let totWorked = dayObj.timeHrs + esH; // Will be 0 if on Vacation or Off
 
                         if (totWorked === 0) {
-                            card.classList.add('hol-unworked'); 
+                            // Don't visibly label it 'unworked' if it's a vacation day, but still award the hours
+                            if (!dayObj.isVac) card.classList.add('hol-unworked'); 
                             dayObj.uhHrs = 8;
                         } else {
                             card.classList.add('hol-worked');
@@ -1173,14 +1212,13 @@ function isUnionHoliday(dateStr){
                 else {
                     for (let d = 0; d < 7; d++) {
                         if (document.getElementById(`ro-${w}-${d}`).checked) continue;
-                        let isVD = document.getElementById(`vd-${w}-${d}`).checked; 
-                        let dayDate = dayMap[(w-1)*7 + d].date;
-                        let isVacArr = vacationDates.includes(dayDate.toISOString().split('T')[0]);
-                        if(isVD || isVacArr) { wk.vC += (vacHourly * 8); wk.vH += 8; continue; }
-
                         let dayIdx = (w-1)*7 + d;
-                        let tH = dayMap[dayIdx].timeHrs;
-                        let hasWork = dayMap[dayIdx].hasWork;
+                        let dObj = dayMap[dayIdx];
+                        
+                        if(dObj.isVac) { wk.vC += (vacHourly * 8); wk.vH += 8; continue; }
+
+                        let tH = dObj.timeHrs;
+                        let hasWork = dObj.hasWork;
                         if(!hasWork) continue; 
 
                         let exV = document.getElementById(`extra-rate-${w}-${d}`).value;
@@ -1197,9 +1235,10 @@ function isUnionHoliday(dateStr){
                         let isXTRA = document.getElementById(`extra-${w}-${d}`)?.checked;
                         if(document.getElementById(`call-${w}-${d}`).checked) { wk.cC += (eR * 2); wk.cH += 2; }
                         let holCheck = document.getElementById(`hol-${w}-${d}`);
-                        let isHoliday = (holCheck && holCheck.checked) || isUnionHoliday(dayDate.toISOString().split('T')[0]); 
+                        let isHoliday = (holCheck && holCheck.checked) || isUnionHoliday(dObj.date.toISOString().split('T')[0]); 
                         
                         let fills = !isXTRA;
+                        
                         let baseHrsToProcess = tH;
                         let esHrsToProcess = esH;
                         
@@ -1213,6 +1252,7 @@ function isUnionHoliday(dateStr){
                             let curR = (h > (baseHrsToProcess - stH) && stR > 0) ? stR : eR; 
                             let regPart = 0, otPart = 0;
                             
+                            // Dynamic Tripwire
                             if (h > tripwireLimit && !isHoliday && !isXTRA) {
                                 otPart = chunk; wk.oC += (curR * 1.5 * otPart); wk.oH += otPart; wk.incC += (curR * 1.5 * otPart);
                                 continue;
@@ -1246,14 +1286,16 @@ function isUnionHoliday(dateStr){
                             }
                         }
                         
+                        // Process Early/Stay-Over Hours (Fixed Incentive Bug)
                         if (esHrsToProcess > 0) {
                             let maxES = Math.ceil(esHrsToProcess * 4);
                             for (let b = 1; b <= maxES; b++) {
                                 let chunk = 0.25;
                                 if (b * 0.25 > esHrsToProcess) { chunk = esHrsToProcess - ((b-1) * 0.25); }
                                 let otPart = 0;
+                                
                                 if (isHoliday) {
-                                    otPart = chunk; wk.hC += (esR * 2.5 * otPart); wk.hH += otPart; wk.incC += (esR * 2.5 * otPart);
+                                    otPart = chunk; wk.hC += (esR * 2.5 * otPart); wk.hH += otPart; wk.incC += (esR * 2.5 * otPart); 
                                     if(d===0 && fills) buck = buck + chunk;
                                 } else {
                                     if(d===0) {
