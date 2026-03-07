@@ -657,15 +657,25 @@
             let statusClass = "";
             if (isVerified) statusClass = "verified"; else if (isDone) statusClass = "estimated"; else if (today >= p.start && today <= p.end) statusClass = "current";
             let isVac = false;
+            let hasHol = false;
             let pS = new Date(p.start);
-            while(pS <= new Date(p.end)) { if(vacationDates.includes(fmt(pS))) isVac = true; pS.setDate(pS.getDate()+1); }
+            let pE = new Date(p.end);
+            while(pS <= pE) { 
+                let dStr = fmt(pS);
+                if(vacationDates.includes(dStr)) isVac = true; 
+                if(isUnionHoliday(dStr)) hasHol = true; 
+                pS.setDate(pS.getDate()+1); 
+            }
             if(isVac) statusClass += " vacation-active";
+            
+            let rangeStyle = hasHol ? "color: #ba68c8; font-weight: bold;" : "";
+            
             let depBadge = "";
             if(isDone && distTotal > 0) {
                 let mainDep = Math.max(0, data.net - distTotal);
                 depBadge = `<div class="deposit-badge">Main Deposit: ${f(mainDep)}</div>`;
             }
-            container.innerHTML += `<div class="pay-card ${statusClass} ${p.isEarly?'early-pay':''}" onclick="openPeriod(${p.id})" data-ref-section="Dashboard" data-ref-selector=".pay-card"><div class="date-badge" onclick="resetSingleCheck(${p.id}, event)">#${p.id}</div><div class="card-info"><span class="pay-date-label">${p.payDate} Paycheck</span><span class="period-range">${p.fullRange}</span>${depBadge}</div><div class="card-total">${val}</div></div>`;
+            container.innerHTML += `<div class="pay-card ${statusClass} ${p.isEarly?'early-pay':''}" onclick="openPeriod(${p.id})" data-ref-section="Dashboard" data-ref-selector=".pay-card"><div class="date-badge" onclick="resetSingleCheck(${p.id}, event)">#${p.id}</div><div class="card-info"><span class="pay-date-label">${p.payDate} Paycheck</span><span class="period-range" style="${rangeStyle}">${p.fullRange}</span>${depBadge}</div><div class="card-total">${val}</div></div>`;
         });
         document.getElementById('header-ytd-label').innerText = "EST. GROSS YTD";
        document.getElementById('header-ytd-gross').innerText = f(totalEstGrossVal);
@@ -1108,17 +1118,26 @@ function applySchedule(pStart) {
                     if (hasMT && mtLabel) { mtLabel.style.borderColor = 'var(--gold)'; }
 
                     let hasWork = false;
+                    let hasMainShift = false;
+                    let parsedES = parseFloat(esH) || 0;
+                    let parsedStep = parseFloat(stepH) || 0;
+
                     if (!isVac && !ro) {
-                        let parsedES = parseFloat(esH) || 0;
-                        let parsedStep = parseFloat(stepH) || 0;
-                        if (timeHrs > 0 || parsedES > 0 || parsedStep > 0) { hasWork = true; }
-                        else if (btn.classList.contains('active')) { 
-                            let btnTxt = btn.innerText.split(' ')[0];
+                        // 1. Math Check: Triggers pay engine
+                        if (timeHrs > 0 || parsedES > 0 || parsedStep > 0 || btn.classList.contains('active')) { 
                             hasWork = true; 
-                            timeHrs = parseFloat(btnTxt) || 12; 
+                        }
+                        
+                        // 2. UI Check: Triggers button activation
+                        if (timeHrs > 0 || btn.classList.contains('active')) {
+                            hasMainShift = true;
+                            if (timeHrs === 0 && btn.classList.contains('active')) {
+                                let btnTxt = btn.innerText.split(' ')[0];
+                                timeHrs = parseFloat(btnTxt) || 12; 
+                            }
                         }
                     }
-                    
+
                     card.className = 'day-card'; 
                     btn.classList.remove('btn-green', 'btn-purple'); 
                     let sysHolName = isUnionHoliday(dateStr.split('T')[0]);
@@ -1128,24 +1147,24 @@ function applySchedule(pStart) {
                     else if (isVac) { card.classList.add('status-vac'); } 
                     else if (ro) { card.classList.add('ro-active'); }
 
-                   if (hasWork) {
-                        // Only activate the main button if main hours exist
-                        if (timeHrs > 0 || btn.innerText !== (typeof sLen !== 'undefined' ? sLen + " HR" : "12 HR")) {
-                            btn.classList.add('active'); 
-                        } else {
-                            btn.classList.remove('active'); // Keep it off if only drawer hours exist
-                        }
-                        
-                        if (isHol || sysHolName) { btn.classList.add('btn-purple'); card.classList.add('status-hol'); } 
-                        else if (xtra) { btn.classList.add('btn-green'); card.classList.add('status-xtra'); } 
+                    // 3. Decoupled UI logic
+                    if (hasMainShift) {
+                        btn.classList.add('active'); 
+                        if (isHol || sysHolName) { btn.classList.add('btn-purple'); } 
+                        else if (xtra) { btn.classList.add('btn-green'); } 
                         else { card.classList.add('status-worked'); }
-                    } else if (isVac) {
+                    } else {
                         btn.classList.remove('active');
-                        document.getElementById('time-'+w+'-'+d).value = ""; 
+                        if (isHol || sysHolName) {
+                            // Button stays dim on unworked holiday
+                        } else if (isVac) {
+                            document.getElementById('time-'+w+'-'+d).value = ""; 
+                        } else if (hasWork) {
+                            card.classList.add('status-worked'); // Drawer work shows on card border
+                        }
                     }
                     
-                    // Added isVac to dayMap for the holiday scanner
-                    dayMap.push({ w: w, d: d, date: new Date(dateStr), ro: ro, hasWork: hasWork, extra: extra, xtra: xtra, isScheduled: (hasWork || ro) && !xtra, timeHrs: timeHrs, dq: (dqCheck && dqCheck.checked), mt: hasMT, isVac: isVac });
+                    dayMap.push({ w: w, d: d, date: new Date(dateStr), ro: ro, hasWork: hasWork, extra: extra, xtra: xtra, isScheduled: (hasMainShift || ro) && !xtra, timeHrs: timeHrs, dq: (dqCheck && dqCheck.checked), mt: hasMT, isVac: isVac });
                 }
             }
             if (dayMap.length === 0) return;
