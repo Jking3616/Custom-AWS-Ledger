@@ -1345,9 +1345,14 @@
             lastCalcHours = { Regular: GT.rH, Vacation: GT.vH, Overtime: GT.oH, Sunday: GT.sH, CallOut: GT.cH, HolidayWk: GT.hH, HolidayUH: GT.uhH, ShiftDiff: shiftHours, Incentive: (parseFloat(document.getElementById(`bonus-1`).value)||0) + (parseFloat(document.getElementById(`bonus-2`).value)||0), VacaBonus: (GT.vbC > 0 ? 1 : 0), MealTicket: GT.mtH };
 
             let dR = parseFloat(document.getElementById('duesRate').value)||0; let dCF = parseFloat(document.getElementById('duesCapFactor').value)||1.2923; let dHrR = parseFloat(document.getElementById('duesHrRate').value)||0.02;
-            let dEst = Math.min(totalGross * (dR / 100), (totalGross / totalWorkHrs) * dCF);
+            let avgHrRate = (totalWorkHrs > 0) ? (totalGross / totalWorkHrs) : 0;
+            let dEst = Math.min(totalGross * (dR / 100), avgHrRate * dCF);
+            
+            // V 1.3.8 DUAL TALLY LOGIC: Adds Call-Out penalty back in ONLY for the flat deduction
+            let totalFlatHrs = totalWorkHrs + GT.cH; 
+            
             let kR = (parseFloat(document.getElementById('kRate').value)||0)/100;
-            let est = { k: r2((totalGross - GT.mtC) * kR), fed: r2((totalGross - r2((totalGross - GT.mtC) * kR))*((parseFloat(document.getElementById('fedTaxRate').value)||0)/100)), state: r2((totalGross - r2((totalGross - GT.mtC) * kR))*((parseFloat(document.getElementById('stateTaxRate').value)||0)/100)), city: r2(totalGross*((parseFloat(document.getElementById('cityTaxRate').value)||0)/100)), fica: r2(totalGross*0.062), med: r2(totalGross*0.0145), dues: r2(dEst), duesHr: r2(totalWorkHrs*dHrR), life: parseFloat(document.getElementById('lifeEE').value)||0, addOpt: parseFloat(document.getElementById('addOpt').value)||0, charity: parseFloat(document.getElementById('charity').value)||0, l1: parseFloat(document.getElementById('loan1').value)||0, l2: parseFloat(document.getElementById('loan2').value)||0, garn: parseFloat(document.getElementById('garnishment').value)||0 };
+            let est = { k: r2((totalGross - GT.mtC) * kR), fed: r2((totalGross - r2((totalGross - GT.mtC) * kR))*((parseFloat(document.getElementById('fedTaxRate').value)||0)/100)), state: r2((totalGross - r2((totalGross - GT.mtC) * kR))*((parseFloat(document.getElementById('stateTaxRate').value)||0)/100)), city: r2(totalGross*((parseFloat(document.getElementById('cityTaxRate').value)||0)/100)), fica: r2(totalGross*0.062), med: r2(totalGross*0.0145), dues: r2(dEst), duesHr: r2(totalFlatHrs*dHrR), life: parseFloat(document.getElementById('lifeEE').value)||0, addOpt: parseFloat(document.getElementById('addOpt').value)||0, charity: parseFloat(document.getElementById('charity').value)||0, l1: parseFloat(document.getElementById('loan1').value)||0, l2: parseFloat(document.getElementById('loan2').value)||0, garn: parseFloat(document.getElementById('garnishment').value)||0 };
             
             let act = auditData[currentPeriodId] || {}, finalD = 0; lastUsedDeductions = {};
             for(let key in deductionLabels) {
